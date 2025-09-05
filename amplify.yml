@@ -1,0 +1,68 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Detect and use the correct package manager (Amazon Linux 2023 uses dnf)
+        - |
+          if command -v dnf >/dev/null 2>&1; then
+            PKG_MGR="dnf"
+          elif command -v yum >/dev/null 2>&1; then
+            PKG_MGR="yum"
+          else
+            echo "Error: No supported package manager found"
+            exit 1
+          fi
+          echo "Using package manager: $PKG_MGR"
+        # Update system packages
+        - $PKG_MGR update -y
+        # Install basic dependencies
+        - $PKG_MGR install -y wget tar gzip
+        # Install TeX Live (try multiple package names for compatibility)
+        - |
+          if $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-fontsrecommended texlive-collection-latexextra 2>/dev/null; then
+            echo "TeX Live installed via scheme-medium"
+          elif $PKG_MGR install -y texlive texlive-latex texlive-xetex 2>/dev/null; then
+            echo "TeX Live installed via basic packages"
+          else
+            echo "Installing TeX Live from upstream..."
+            wget -q http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+            tar xzf install-tl-unx.tar.gz
+            cd install-tl-*/
+            echo "selected_scheme scheme-basic" > texlive.profile
+            echo "tlpdbopt_install_docfiles 0" >> texlive.profile
+            echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
+            ./install-tl -profile texlive.profile -no-interaction
+            export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
+            tlmgr install xetex fontspec xecjk ctex geometry
+          fi
+        # Install Pandoc
+        - |
+          PANDOC_VERSION="3.1.8"
+          wget -q https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
+          tar xzf pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz --strip-components 1 -C /usr/local
+          rm pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
+        # Verify installation
+        - pandoc --version
+        - which pdflatex && pdflatex --version || echo "pdflatex not found, using xelatex"
+    build:
+      commands:
+        - echo "Building LaTeX document..."
+        - make build
+        - echo "Building HTML version..."
+        - make html
+        - echo "Build complete!"
+  artifacts:
+    baseDirectory: public
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - /usr/local/texlive/**/*
+      - /root/.texlive*/**/*
+      - /usr/local/bin/pandoc*
+      - /usr/local/share/pandoc/**/*
+      - build/**/*
+      - src/**/*.aux
+      - src/**/*.log
+      - src/**/*.toc
