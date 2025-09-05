@@ -16,30 +16,33 @@ frontend:
           echo "Using package manager: $PKG_MGR"
         # Install basic dependencies (skip system update as it requires root)
         - sudo $PKG_MGR install -y wget tar gzip
-        # Install TeX Live (try multiple package names for compatibility)
+        # Install minimal TeX Live with only essential packages for faster builds
         - |
-          if sudo $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-fontsrecommended texlive-collection-latexextra 2>/dev/null; then
-            echo "TeX Live installed via scheme-medium"
-          elif sudo $PKG_MGR install -y texlive texlive-latex texlive-xetex 2>/dev/null; then
-            echo "TeX Live installed via basic packages"
+          if sudo $PKG_MGR install -y texlive-base texlive-xetex texlive-lang-chinese 2>/dev/null; then
+            echo "TeX Live installed via minimal packages"
+          elif sudo $PKG_MGR install -y texlive texlive-xetex 2>/dev/null; then
+            echo "TeX Live basic installed"
           else
-            echo "Installing TeX Live from upstream..."
+            echo "Installing minimal TeX Live..."
             wget -q http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
             tar xzf install-tl-unx.tar.gz
             cd install-tl-*/
-            echo "selected_scheme scheme-basic" > texlive.profile
+            echo "selected_scheme scheme-minimal" > texlive.profile
             echo "tlpdbopt_install_docfiles 0" >> texlive.profile
             echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
+            echo "option_adjustrepo 0" >> texlive.profile
             ./install-tl -profile texlive.profile -no-interaction
             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-            tlmgr install xetex fontspec xecjk ctex geometry
+            tlmgr install ctex geometry xecjk fontspec
           fi
-        # Install Pandoc
+        # Install Pandoc (lightweight alternative)
         - |
           PANDOC_VERSION="3.1.8"
           wget -q https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
           sudo tar xzf pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz --strip-components 1 -C /usr/local
           rm pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
+        # Alternative: Use containerized approach for even faster builds
+        # - docker run --rm -v $(pwd):/workspace texlive/texlive:latest xelatex /workspace/src/tech-management.tex
         # Verify installation
         - pandoc --version
         - which pdflatex && pdflatex --version || echo "pdflatex not found, using xelatex"
@@ -56,10 +59,13 @@ frontend:
       - '**/*'
   cache:
     paths:
+      # Cache TeX Live installation (significantly speeds up subsequent builds)
       - /usr/local/texlive/**/*
       - /root/.texlive*/**/*
+      # Cache Pandoc installation
       - /usr/local/bin/pandoc*
       - /usr/local/share/pandoc/**/*
+      # Cache build artifacts
       - build/**/*
       - src/**/*.aux
       - src/**/*.log
