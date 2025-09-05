@@ -1,40 +1,20 @@
-# Makefile for building the LaTeX document
-.PHONY: build clean rebuild git-init view
+# Makefile for Tech Management LaTeX document
+.PHONY: build clean
 
 # Variables
 SRC_DIR := src
 BUILD_DIR := build
-MAIN_TEX := main.tex
-OUTPUT_PDF := main.pdf
-AUX_EXTENSIONS := aux fls fdb_latexmk log nav out snm toc xdv synctex.gz
+MAIN_TEX := tech-management.tex
+OUTPUT_PDF := tech-management.pdf
 
 build:
-	@echo "Building the document..."
 	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(BUILD_DIR)/chapters
-	cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
-	cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
-	@echo "Build complete! PDF is at $(BUILD_DIR)/$(OUTPUT_PDF)"
+	@cp $(SRC_DIR)/$(MAIN_TEX) $(BUILD_DIR)/
+	@cd $(BUILD_DIR) && xelatex -interaction=nonstopmode $(MAIN_TEX)
+	@cd $(BUILD_DIR) && xelatex -interaction=nonstopmode $(MAIN_TEX)
+	@echo "Build complete! PDF: $(BUILD_DIR)/$(OUTPUT_PDF)"
 
 clean:
-	@echo "Cleaning build directory and auxiliary files..."
-	@rm -rf $(BUILD_DIR)/*
-	@for ext in $(AUX_EXTENSIONS); do \
-		rm -f $(SRC_DIR)/*.$$ext; \
-		rm -f $(SRC_DIR)/chapters/*.$$ext 2>/dev/null || true; \
-	done
+	@rm -rf $(BUILD_DIR)
+	@rm -f $(SRC_DIR)/*.aux $(SRC_DIR)/*.log $(SRC_DIR)/*.toc $(SRC_DIR)/*.out
 	@echo "Clean complete!"
-
-rebuild: clean build
-	@echo "Rebuild complete!"
-
-# Initialize git repository
-git-init:
-	@git init
-	@git add .
-	@git commit -m "Initial commit: Tech Management book project"
-	@echo "Git repository initialized and initial commit created!"
-
-# View the generated PDF (requires open command on macOS)
-view:
-	@open $(BUILD_DIR)/$(OUTPUT_PDF) 2>/dev/null || echo "Unable to open PDF viewer. PDF is located at $(BUILD_DIR)/$(OUTPUT_PDF)"
