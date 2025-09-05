@@ -33,7 +33,7 @@ frontend:
             echo "option_adjustrepo 0" >> texlive.profile
             ./install-tl -profile texlive.profile -no-interaction
             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-            tlmgr install ctex geometry xecjk fontspec
+            tlmgr install ctex ctexbook geometry xecjk fontspec zhnumber fandol
           fi
         # Install Pandoc (lightweight alternative)
         - |
