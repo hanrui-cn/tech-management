@@ -1,27 +1,10 @@
-# 技术管理书籍
+# tech-management
 
-这是一本关于技术管理的书籍，旨在分享在技术管理领域的经验和见解。
+## 使用方法
+1. 在 `ideas/` 对应文件夹中创建 `.tex` 文件记录想法
+2. 使用 `make` 编译PDF
+3. 使用 `make clean` 清理临时文件
 
-## 项目结构
-
-- `src/` - LaTeX 源文件目录
-- `build/` - 编译输出目录
-- `Makefile` - 构建脚本
-
-## 构建说明
-
-要构建 PDF 文件，请运行：
-
-```bash
-make build
-```
-
-生成的 PDF 将位于 `build/main.pdf`。
-
-## 清理
-
-要清理生成的文件，请运行：
-
-```bash
-make clean
-```
+## 结构说明
+- 章节使用 `\section`
+- 想法使用 `\subsection`
