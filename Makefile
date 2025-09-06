@@ -28,7 +28,7 @@ $(OUTPUT_PDF): $(SOURCE_TEX)
 $(OUTPUT_HTML): $(SOURCE_TEX) $(HTML_TEMPLATE) $(CSS_FILE)
 	@mkdir -p public
 	@cp $(CSS_FILE) public/
-	@pandoc $(SOURCE_TEX) -f latex -t html5 --template=$(HTML_TEMPLATE) --css=style.css -o $(OUTPUT_HTML)
+	@pandoc $(SOURCE_TEX) -f latex -t html5 --template=$(HTML_TEMPLATE) --css=style.css --variable=date:"$(shell date +'%Y年%m月%d日')" -o $(OUTPUT_HTML)
 	@if [ -f $(OUTPUT_PDF) ]; then cp $(OUTPUT_PDF) public/; fi
 	@echo "HTML build complete! File: $(OUTPUT_HTML)"
 

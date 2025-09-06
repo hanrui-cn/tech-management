@@ -1,17 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$title$</title>
+    <meta name="author" content="Han Rui">
+    
+    <title>Tech Management</title>
     <link rel="stylesheet" href="$css$">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
 </head>
 <body>
-    <div class="content">
-        $body$
-        <div class="download">
-            <a href="tech-management.pdf" download>Download PDF</a>
-        </div>
+    <div class="docs-container">
+        <header class="docs-header">
+            <div class="header-content">
+                <h1 class="docs-title">Tech Management</h1>
+                <div class="docs-meta">
+                    <span class="author">Han Rui</span>
+                    <span class="divider">•</span>
+                    <span class="update-date">$date$</span>
+                    <a href="tech-management.pdf" class="pdf-link" download title="Download PDF">PDF</a>
+                </div>
+            </div>
+        </header>
+        
+        <main class="docs-content">
+            $body$
+        </main>
     </div>
 </body>
 </html>
