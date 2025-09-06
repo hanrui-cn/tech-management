@@ -19,14 +19,21 @@ frontend:
         # Install TeX Live with ctex support
         - |
           echo "Installing TeX Live and ctex packages..."
-          # Try package manager first
+           # Create cache directory for TeX Live
+           mkdir -p .texlive-cache
+           # Try package manager first
           if sudo $PKG_MGR install -y texlive-scheme-basic texlive-xetex texlive-collection-langchinese >/dev/null 2>&1; then
             echo "TeX Live installed via package manager with Chinese support"
           elif sudo $PKG_MGR install -y texlive texlive-xetex >/dev/null 2>&1; then
             echo "TeX Live basic installed, will install ctex manually"
           else
             echo "Installing TeX Live from source with ctex support (this may take a few minutes)..."
-             wget -q http://mirrors.rit.edu/CTAN/systems/texlive/tlnet/install-tl-unx.tar.gz
+             # Check cache first
+             if [ -d ".texlive-cache/texlive" ]; then
+               echo "Using cached TeX Live installation..."
+               sudo cp -r .texlive-cache/texlive /usr/local/ 2>/dev/null || true
+             fi
+              wget -q http://mirrors.rit.edu/CTAN/systems/texlive/tlnet/install-tl-unx.tar.gz
             tar xzf install-tl-unx.tar.gz >/dev/null 2>&1
             cd install-tl-*/
             echo "selected_scheme scheme-basic" > texlive.profile
@@ -39,8 +46,10 @@ frontend:
             echo "TEXMFSYSCONFIG /usr/local/texlive/2024/texmf-config" >> texlive.profile
             echo "TEXMFSYSVAR /usr/local/texlive/2024/texmf-var" >> texlive.profile
             sudo ./install-tl -profile texlive.profile -no-interaction --no-doc-install --no-src-install >/dev/null 2>&1
-            echo "TeX Live installation completed."
-            export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
+             echo "TeX Live installation completed."
+             # Cache the installation
+             sudo cp -r /usr/local/texlive .texlive-cache/ 2>/dev/null || true
+             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
             echo 'export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"' >> ~/.bashrc
           fi
         # Ensure ctex and required packages are installed
@@ -85,14 +94,7 @@ frontend:
       - '**/*'
   cache:
     paths:
-      # Cache TeX Live installation (significantly speeds up subsequent builds)
-      - /usr/local/texlive/**/*
-      - /root/.texlive*/**/*
-      # Cache Pandoc installation
-      - /usr/local/bin/pandoc*
-      - /usr/local/share/pandoc/**/*
-      # Cache build artifacts
+      # Cache node modules and build artifacts
+      - node_modules/**/*
+      - .texlive-cache/**/*
       - build/**/*
-      - src/**/*.aux
-      - src/**/*.log
-      - src/**/*.toc
