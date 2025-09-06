@@ -11,8 +11,14 @@ frontend:
           echo "Installing TeX Live with ctex support..."
           sudo dnf install -y texlive-scheme-basic texlive-xetex texlive-collection-langchinese
           echo "TeX Live installation completed with Chinese support"
-        # Install Pandoc for HTML conversion
-        - sudo dnf install -y pandoc
+        # Install Pandoc from GitHub releases (dnf package not available)
+        - |
+          echo "Installing Pandoc from GitHub releases..."
+          wget -q https://github.com/jgm/pandoc/releases/download/3.1.8/pandoc-3.1.8-linux-amd64.tar.gz
+          tar -xzf pandoc-3.1.8-linux-amd64.tar.gz
+          sudo cp pandoc-3.1.8/bin/pandoc /usr/local/bin/
+          sudo chmod +x /usr/local/bin/pandoc
+          rm -rf pandoc-3.1.8*
         # Verify installations
         - xelatex --version
         - pandoc --version
