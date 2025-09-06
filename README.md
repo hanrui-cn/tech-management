@@ -1,4 +1,4 @@
-# Tech Management
+# Tech Management Notes
 
 ## Usage
 
