@@ -59,33 +59,19 @@ def scan_ideas_directory(ideas_path):
 
 def generate_latex_content(parts):
     """
-    Generate the complete LaTeX document content.
+    Generate LaTeX content with parts and chapters based on the directory structure.
+    This function only generates the content section, preserving the existing
+    document structure in tech-management.tex.
     
     Args:
         parts (list): List of tuples (part_name, chapters)
         
     Returns:
-        str: Complete LaTeX document content
+        str: LaTeX content for parts and chapters only
     """
     latex_content = []
     
-    # Document header
-    latex_content.extend([
-        r"\documentclass[openany,10pt,UTF8]{ctexbook}",
-        r"\usepackage[a4paper,twoside,width=15cm]{geometry}",
-        "",
-        r"\title{Tech Management}",
-        r"\author{Han Rui}",
-        r"\date{\today}",
-        "",
-        r"\begin{document}",
-        "",
-        r"\maketitle",
-        r"\tableofcontents",
-        ""
-    ])
-    
-    # Generate parts and chapters
+    # Generate parts and chapters only (no document header/footer)
     for part_name, chapters in parts:
         latex_content.append(f"\\part{{{part_name}}}")
         
@@ -95,44 +81,80 @@ def generate_latex_content(parts):
         
         latex_content.append("")  # Empty line after each part
     
-    # Document footer
-    latex_content.extend([
-        r"\end{document}"
-    ])
-    
     return "\n".join(latex_content)
 
 def main():
     """
-    Main function to generate LaTeX structure.
+    Main function that scans the ideas directory and updates the existing
+    tech-management.tex file with new structure while preserving the document setup.
+    
+    Args:
+        output_file (str): Path to the LaTeX file to update
+        
+    Returns:
+        int: Exit code (0 for success, 1 for error)
     """
-    # Default paths
-    ideas_path = "src/ideas"
-    output_file = sys.argv[1] if len(sys.argv) > 1 else None
+    if len(sys.argv) != 2:
+        print("Usage: python3 generate_latex.py <tex_file.tex>")
+        print("")
+        print("This script scans the src/ideas directory and updates")
+        print("the LaTeX file with automatic part and chapter structure.")
+        return 1
+    
+    tex_file = sys.argv[1]
     
     try:
+        # Get the directory containing this script
+        script_dir = Path(__file__).parent
+        ideas_path = script_dir / "src" / "ideas"
+        
+        if not ideas_path.exists():
+            print(f"Error: Ideas directory not found at {ideas_path}")
+            return 1
+        
+        # Read existing tex file
+        tex_path = Path(tex_file)
+        if not tex_path.exists():
+            print(f"Error: LaTeX file not found at {tex_file}")
+            return 1
+            
+        with open(tex_path, 'r', encoding='utf-8') as f:
+            original_content = f.read()
+        
         # Scan the ideas directory
         parts = scan_ideas_directory(ideas_path)
         
         if not parts:
-            print("Warning: No parts with chapters found in ideas directory", file=sys.stderr)
+            print("Warning: No content found in ideas directory")
             return 1
         
-        # Generate LaTeX content
-        latex_content = generate_latex_content(parts)
+        # Generate new content section
+        new_content_section = generate_latex_content(parts)
         
-        # Output to file or stdout
-        if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(latex_content)
-            print(f"LaTeX structure generated: {output_file}")
-        else:
-            print(latex_content)
+        # Find the content section boundaries
+        import re
+        # Match everything from \tableofcontents to \end{document}
+        pattern = r'(.*?\\tableofcontents\s*\n)(.*?)(\\end\{document\}.*?)'
+        match = re.search(pattern, original_content, re.DOTALL)
         
+        if not match:
+            print("Error: Could not find content section in LaTeX file")
+            return 1
+        
+        # Reconstruct the file with new content
+        header = match.group(1)
+        footer = match.group(3)
+        updated_content = header + "\n" + new_content_section + "\n\n" + footer
+        
+        # Write updated content back to file
+        with open(tex_path, 'w', encoding='utf-8') as f:
+            f.write(updated_content)
+        
+        print(f"LaTeX structure updated in {tex_file}")
         return 0
         
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: {e}")
         return 1
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ body {
 
 /* Container Styles */
 .docs-container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 3rem auto;
     background: #ffffff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -35,7 +35,7 @@ body {
 }
 
 .header-content {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 3rem;
     text-align: center;
