@@ -20,24 +20,25 @@ frontend:
         - |
           echo "Installing TeX Live and ctex packages..."
           # Try package manager first
-          if sudo $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-langchinese >/dev/null 2>&1; then
+          if sudo $PKG_MGR install -y texlive-scheme-basic texlive-xetex texlive-collection-langchinese >/dev/null 2>&1; then
             echo "TeX Live installed via package manager with Chinese support"
           elif sudo $PKG_MGR install -y texlive texlive-xetex >/dev/null 2>&1; then
             echo "TeX Live basic installed, will install ctex manually"
           else
             echo "Installing TeX Live from source with ctex support (this may take a few minutes)..."
-            wget -q http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+             wget -q http://mirrors.rit.edu/CTAN/systems/texlive/tlnet/install-tl-unx.tar.gz
             tar xzf install-tl-unx.tar.gz >/dev/null 2>&1
             cd install-tl-*/
-            echo "selected_scheme scheme-medium" > texlive.profile
+            echo "selected_scheme scheme-basic" > texlive.profile
             echo "tlpdbopt_install_docfiles 0" >> texlive.profile
-            echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
+             echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
+             echo "instopt_adjustpath 0" >> texlive.profile
             echo "option_adjustrepo 0" >> texlive.profile
             echo "TEXDIR /usr/local/texlive/2024" >> texlive.profile
             echo "TEXMFLOCAL /usr/local/texlive/texmf-local" >> texlive.profile
             echo "TEXMFSYSCONFIG /usr/local/texlive/2024/texmf-config" >> texlive.profile
             echo "TEXMFSYSVAR /usr/local/texlive/2024/texmf-var" >> texlive.profile
-            sudo ./install-tl -profile texlive.profile -no-interaction >/dev/null 2>&1
+            sudo ./install-tl -profile texlive.profile -no-interaction --no-doc-install --no-src-install >/dev/null 2>&1
             echo "TeX Live installation completed."
             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
             echo 'export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"' >> ~/.bashrc
