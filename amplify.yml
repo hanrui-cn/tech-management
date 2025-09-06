@@ -20,14 +20,14 @@ frontend:
         - |
           echo "Installing TeX Live and ctex packages..."
           # Try package manager first
-          if sudo $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-langchinese 2>/dev/null; then
+          if sudo $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-langchinese >/dev/null 2>&1; then
             echo "TeX Live installed via package manager with Chinese support"
-          elif sudo $PKG_MGR install -y texlive texlive-xetex 2>/dev/null; then
+          elif sudo $PKG_MGR install -y texlive texlive-xetex >/dev/null 2>&1; then
             echo "TeX Live basic installed, will install ctex manually"
           else
-            echo "Installing TeX Live from source with ctex support..."
+            echo "Installing TeX Live from source with ctex support (this may take a few minutes)..."
             wget -q http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
-            tar xzf install-tl-unx.tar.gz
+            tar xzf install-tl-unx.tar.gz >/dev/null 2>&1
             cd install-tl-*/
             echo "selected_scheme scheme-medium" > texlive.profile
             echo "tlpdbopt_install_docfiles 0" >> texlive.profile
@@ -37,7 +37,8 @@ frontend:
             echo "TEXMFLOCAL /usr/local/texlive/texmf-local" >> texlive.profile
             echo "TEXMFSYSCONFIG /usr/local/texlive/2024/texmf-config" >> texlive.profile
             echo "TEXMFSYSVAR /usr/local/texlive/2024/texmf-var" >> texlive.profile
-            sudo ./install-tl -profile texlive.profile -no-interaction
+            sudo ./install-tl -profile texlive.profile -no-interaction >/dev/null 2>&1
+            echo "TeX Live installation completed."
             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
             echo 'export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"' >> ~/.bashrc
           fi
@@ -46,11 +47,15 @@ frontend:
           export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
           echo "Installing ctex and dependencies..."
           if command -v tlmgr >/dev/null 2>&1; then
-            sudo tlmgr update --self
-            sudo tlmgr install ctex collection-langchinese geometry xecjk fontspec zhnumber zhspacing
-            echo "ctex packages installed successfully"
+            sudo tlmgr update --self >/dev/null 2>&1 || echo "tlmgr update failed, continuing..."
+            sudo tlmgr install ctex collection-langchinese geometry xecjk fontspec zhnumber zhspacing >/dev/null 2>&1 || {
+              echo "tlmgr install failed, trying alternative approach..."
+              sudo tlmgr install scheme-full >/dev/null 2>&1 || echo "scheme-full install failed"
+            }
+            echo "ctex packages installation attempted"
           else
-            echo "tlmgr not available, ctex should be included in medium scheme"
+            echo "tlmgr not available, trying package manager approach"
+            sudo $PKG_MGR install -y texlive-collection-langchinese texlive-ctex >/dev/null 2>&1 || echo "Package manager ctex install failed"
           fi
         # Install Pandoc (lightweight alternative)
         - |
