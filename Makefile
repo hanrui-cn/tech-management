@@ -20,9 +20,8 @@ html: $(OUTPUT_HTML)
 
 $(OUTPUT_PDF): $(SOURCE_TEX)
 	@mkdir -p $(BUILD_DIR)
-	@cp $(SRC_DIR)/$(MAIN_TEX) $(BUILD_DIR)/
-	@cd $(BUILD_DIR) && xelatex -interaction=nonstopmode $(MAIN_TEX)
-	@cd $(BUILD_DIR) && xelatex -interaction=nonstopmode $(MAIN_TEX)
+	@cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
+	@cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
 	@echo "Build complete! PDF: $(OUTPUT_PDF)"
 
 $(OUTPUT_HTML): $(SOURCE_TEX) $(HTML_TEMPLATE) $(CSS_FILE)
