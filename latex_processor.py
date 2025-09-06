@@ -112,19 +112,26 @@ def update_latex_structure(tex_file, ideas_path):
         # Generate new content section
         new_content_section = generate_latex_content(parts)
         
-        # Find the content section boundaries
-        # Match everything from \tableofcontents to \end{document}
-        pattern = r'(.*?\\tableofcontents\s*\n)(.*?)(\\end\{document\}.*?)'
+        # Find the auto-generated content section boundaries
+        # Match everything from BEGIN marker to END marker
+        begin_marker = r'% ========== AUTO-GENERATED CONTENT BEGIN ==========.*?\n'
+        end_marker = r'(% ========== AUTO-GENERATED CONTENT END ==========)'
+        
+        pattern = f'(.*?{begin_marker})(.*?){end_marker}(.*)'
         match = re.search(pattern, original_content, re.DOTALL)
         
         if not match:
-            print("Error: Could not find content section in LaTeX file")
+            print("Error: Could not find auto-generated content markers in LaTeX file")
+            print("Please ensure the file contains BEGIN and END markers")
             return False
         
-        # Reconstruct the file with new content
-        header = match.group(1)
-        footer = match.group(3)
-        updated_content = header + "\n" + new_content_section + "\n\n" + footer
+        # Reconstruct the file with new content between markers
+        header = match.group(1)  # Everything before BEGIN marker
+        end_marker = match.group(3)  # The END marker itself
+        footer = match.group(4)  # Everything after END marker
+        
+        # Ensure we preserve the footer content (like \end{document})
+        updated_content = header + new_content_section + "\n\n" + end_marker + footer
         
         # Write updated content back to file
         with open(tex_path, 'w', encoding='utf-8') as f:
