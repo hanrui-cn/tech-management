@@ -3,86 +3,21 @@ frontend:
   phases:
     preBuild:
       commands:
-        # Detect and use the correct package manager (Amazon Linux 2023 uses dnf)
-        - |
-          if command -v dnf >/dev/null 2>&1; then
-            PKG_MGR="dnf"
-          elif command -v yum >/dev/null 2>&1; then
-            PKG_MGR="yum"
-          else
-            echo "Error: No supported package manager found"
-            exit 1
-          fi
-          echo "Using package manager: $PKG_MGR"
-        # Install basic dependencies (skip system update as it requires root)
-        - sudo $PKG_MGR install -y wget tar gzip
+        # Install basic dependencies (Amazon Linux 2023 uses dnf)
+        - sudo dnf install -y wget tar gzip
         # Install TeX Live with ctex support
+        # Install TeX Live with Chinese support (works on Amazon Linux 2023)
         - |
-          echo "Installing TeX Live and ctex packages..."
-           # Create cache directory for TeX Live
-           mkdir -p .texlive-cache
-           # Try package manager first
-          if sudo $PKG_MGR install -y texlive-scheme-basic texlive-xetex texlive-collection-langchinese >/dev/null 2>&1; then
-            echo "TeX Live installed via package manager with Chinese support"
-          elif sudo $PKG_MGR install -y texlive texlive-xetex >/dev/null 2>&1; then
-            echo "TeX Live basic installed, will install ctex manually"
-          else
-            echo "Installing TeX Live from source with ctex support (this may take a few minutes)..."
-             # Check cache first
-             if [ -d ".texlive-cache/texlive" ]; then
-               echo "Using cached TeX Live installation..."
-               sudo cp -r .texlive-cache/texlive /usr/local/ 2>/dev/null || true
-             fi
-              wget -q http://mirrors.rit.edu/CTAN/systems/texlive/tlnet/install-tl-unx.tar.gz
-            tar xzf install-tl-unx.tar.gz >/dev/null 2>&1
-            cd install-tl-*/
-            echo "selected_scheme scheme-basic" > texlive.profile
-            echo "tlpdbopt_install_docfiles 0" >> texlive.profile
-             echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
-             echo "instopt_adjustpath 0" >> texlive.profile
-            echo "option_adjustrepo 0" >> texlive.profile
-            echo "TEXDIR /usr/local/texlive/2024" >> texlive.profile
-            echo "TEXMFLOCAL /usr/local/texlive/texmf-local" >> texlive.profile
-            echo "TEXMFSYSCONFIG /usr/local/texlive/2024/texmf-config" >> texlive.profile
-            echo "TEXMFSYSVAR /usr/local/texlive/2024/texmf-var" >> texlive.profile
-            sudo ./install-tl -profile texlive.profile -no-interaction --no-doc-install --no-src-install >/dev/null 2>&1
-             echo "TeX Live installation completed."
-             # Cache the installation
-             sudo cp -r /usr/local/texlive .texlive-cache/ 2>/dev/null || true
-             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-            echo 'export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"' >> ~/.bashrc
-          fi
-        # Ensure ctex and required packages are installed
-        - |
-          export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-          echo "Installing ctex and dependencies..."
-          if command -v tlmgr >/dev/null 2>&1; then
-            sudo tlmgr update --self >/dev/null 2>&1 || echo "tlmgr update failed, continuing..."
-            sudo tlmgr install ctex collection-langchinese geometry xecjk fontspec zhnumber zhspacing >/dev/null 2>&1 || {
-              echo "tlmgr install failed, trying alternative approach..."
-              sudo tlmgr install scheme-full >/dev/null 2>&1 || echo "scheme-full install failed"
-            }
-            echo "ctex packages installation attempted"
-          else
-            echo "tlmgr not available, trying package manager approach"
-            sudo $PKG_MGR install -y texlive-collection-langchinese texlive-ctex >/dev/null 2>&1 || echo "Package manager ctex install failed"
-          fi
-        # Install Pandoc (lightweight alternative)
-        - |
-          PANDOC_VERSION="3.1.8"
-          wget -q https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
-          sudo tar xzf pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz --strip-components 1 -C /usr/local
-          rm pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz
-        # Alternative: Use containerized approach for even faster builds
-        # - docker run --rm -v $(pwd):/workspace texlive/texlive:latest xelatex /workspace/src/tech-management.tex
-        # Verify installation
+          echo "Installing TeX Live with ctex support..."
+          sudo dnf install -y texlive-scheme-basic texlive-xetex texlive-collection-langchinese
+          echo "TeX Live installation completed with Chinese support"
+        # Install Pandoc for HTML conversion
+        - sudo dnf install -y pandoc
+        # Verify installations
+        - xelatex --version
         - pandoc --version
-        - which pdflatex && pdflatex --version || echo "pdflatex not found, using xelatex"
     build:
       commands:
-        - echo "Setting up TeX Live environment..."
-        - export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-        - which xelatex || echo "XeLaTeX not found in PATH"
         - echo "Building LaTeX document..."
         - make build
         - echo "Building HTML version..."
@@ -94,7 +29,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      # Cache node modules and build artifacts
-      - node_modules/**/*
-      - .texlive-cache/**/*
       - build/**/*
+      - node_modules/**/*
