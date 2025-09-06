@@ -65,22 +65,15 @@ body {
 }
 
 .pdf-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #666666;
+    color: #888888;
     text-decoration: none;
-    padding: 0.6rem 1.2rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 2px;
-    transition: all 0.2s ease;
     font-size: 0.8rem;
     font-weight: 300;
+    transition: color 0.2s ease;
 }
 
 .pdf-link:hover {
-    color: #000000;
-    border-color: #cccccc;
+    color: #333333;
 }
 
 /* Main Content Styles */
@@ -322,6 +315,5 @@ body {
     
     .pdf-link {
         font-size: 0.75rem;
-        padding: 0.5rem 1rem;
     }
 }

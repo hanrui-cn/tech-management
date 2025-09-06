@@ -20,14 +20,17 @@ html: $(OUTPUT_HTML)
 
 $(OUTPUT_PDF): $(SOURCE_TEX)
 	@mkdir -p $(BUILD_DIR)
+	@python3 generate_latex.py $(SOURCE_TEX)
 	@cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
 	@cd $(SRC_DIR) && xelatex -interaction=nonstopmode -output-directory=../$(BUILD_DIR) $(MAIN_TEX)
 	@echo "Build complete! PDF: $(OUTPUT_PDF)"
 
 $(OUTPUT_HTML): $(SOURCE_TEX) $(HTML_TEMPLATE) $(CSS_FILE)
-	@mkdir -p public
+	@mkdir -p public build
 	@cp $(CSS_FILE) public/
-	@pandoc $(SOURCE_TEX) -f latex -t html5 --template=$(HTML_TEMPLATE) --css=style.css --variable=date:"$(shell date +'%Y年%m月%d日')" -o $(OUTPUT_HTML)
+	@python3 generate_latex.py $(SOURCE_TEX)
+	@python3 expand_latex.py $(SOURCE_TEX) build/expanded.tex
+	@pandoc build/expanded.tex -f latex -t html5 --template=$(HTML_TEMPLATE) --css=style.css --variable=date:"$(shell date +'%Y年%m月%d日')" -o $(OUTPUT_HTML)
 	@if [ -f $(OUTPUT_PDF) ]; then cp $(OUTPUT_PDF) public/; fi
 	@echo "HTML build complete! File: $(OUTPUT_HTML)"
 
