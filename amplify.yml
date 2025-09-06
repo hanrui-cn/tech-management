@@ -16,24 +16,41 @@ frontend:
           echo "Using package manager: $PKG_MGR"
         # Install basic dependencies (skip system update as it requires root)
         - sudo $PKG_MGR install -y wget tar gzip
-        # Install minimal TeX Live with only essential packages for faster builds
+        # Install TeX Live with ctex support
         - |
-          if sudo $PKG_MGR install -y texlive-base texlive-xetex texlive-lang-chinese 2>/dev/null; then
-            echo "TeX Live installed via minimal packages"
+          echo "Installing TeX Live and ctex packages..."
+          # Try package manager first
+          if sudo $PKG_MGR install -y texlive-scheme-medium texlive-xetex texlive-collection-langchinese 2>/dev/null; then
+            echo "TeX Live installed via package manager with Chinese support"
           elif sudo $PKG_MGR install -y texlive texlive-xetex 2>/dev/null; then
-            echo "TeX Live basic installed"
+            echo "TeX Live basic installed, will install ctex manually"
           else
-            echo "Installing minimal TeX Live..."
+            echo "Installing TeX Live from source with ctex support..."
             wget -q http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
             tar xzf install-tl-unx.tar.gz
             cd install-tl-*/
-            echo "selected_scheme scheme-minimal" > texlive.profile
+            echo "selected_scheme scheme-medium" > texlive.profile
             echo "tlpdbopt_install_docfiles 0" >> texlive.profile
             echo "tlpdbopt_install_srcfiles 0" >> texlive.profile
             echo "option_adjustrepo 0" >> texlive.profile
-            ./install-tl -profile texlive.profile -no-interaction
+            echo "TEXDIR /usr/local/texlive/2024" >> texlive.profile
+            echo "TEXMFLOCAL /usr/local/texlive/texmf-local" >> texlive.profile
+            echo "TEXMFSYSCONFIG /usr/local/texlive/2024/texmf-config" >> texlive.profile
+            echo "TEXMFSYSVAR /usr/local/texlive/2024/texmf-var" >> texlive.profile
+            sudo ./install-tl -profile texlive.profile -no-interaction
             export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
-            tlmgr install collection-langchinese ctex geometry xecjk fontspec
+            echo 'export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"' >> ~/.bashrc
+          fi
+        # Ensure ctex and required packages are installed
+        - |
+          export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
+          echo "Installing ctex and dependencies..."
+          if command -v tlmgr >/dev/null 2>&1; then
+            sudo tlmgr update --self
+            sudo tlmgr install ctex collection-langchinese geometry xecjk fontspec zhnumber zhspacing
+            echo "ctex packages installed successfully"
+          else
+            echo "tlmgr not available, ctex should be included in medium scheme"
           fi
         # Install Pandoc (lightweight alternative)
         - |
@@ -48,6 +65,9 @@ frontend:
         - which pdflatex && pdflatex --version || echo "pdflatex not found, using xelatex"
     build:
       commands:
+        - echo "Setting up TeX Live environment..."
+        - export PATH="/usr/local/texlive/2024/bin/x86_64-linux:$PATH"
+        - which xelatex || echo "XeLaTeX not found in PATH"
         - echo "Building LaTeX document..."
         - make build
         - echo "Building HTML version..."
